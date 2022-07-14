@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" content="None" /><link rel="canonical" href="https://telsimguidocumentation.com/" />
+      <link rel="shortcut icon" href="img/favicon.ico" />
+    <title>TelSIM GUI Documentation</title>
+    <link rel="stylesheet" href="css/theme.css" />
+    <link rel="stylesheet" href="css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Home";
+        var mkdocs_page_input_path = "index.md";
+        var mkdocs_page_url = "/";
+      </script>
+    
+    <script src="js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="." class="icon icon-home"> TelSIM GUI Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href=".">Home</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#author-preston-ito">Author: Preston Ito</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#bash-example">bash example</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#python-example">python example</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#imports-and-kpython-address">Imports and KPython Address</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#constants-showdialog-function-and-state-machine-class">Constants, showDialog function, and state machine class</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="about/">About</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href=".">TelSIM GUI Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="." class="icon icon-home" alt="Docs"></a> &raquo;</li><li>Home</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="telsim-gui-documentation">TelSIM GUI Documentation</h2>
+<h4 id="author-preston-ito">Author: Preston Ito</h4>
+<h5 id="bash-example">bash example</h5>
+<p>this is a simple bash example </p>
+<pre><code class="language-bash">python3 -m mkdocs serve
+</code></pre>
+<h5 id="python-example">python example</h5>
+<p>this is a simple python example</p>
+<pre><code class="language-python">&gt;&gt;&gt; import subsystem
+</code></pre>
+<h5 id="imports-and-kpython-address">Imports and KPython Address</h5>
+<p>These are all the imports necessary for the code. It also has KPython address and sets up EPICS channels for translation stage simulators. A good chunk of this code comes from another GUI project created by Paul Richards. His source code was used as a template for this GUI.</p>
+<pre><code class="language-python">#! @KPYTHON3@
+#
+# kpython safely sets RELDIR, KROOT, LROOT, and PYTHONPATH before invoking
+# the actual Python interpreter.
+
+# Setup an EPICS address list if one is not already defined
+
+import os
+import subprocess
+import datetime
+import time
+
+addrs = 'localhost:5064 vm-k1epicsgateway:5064 vm-k2epicsgateway:5064 k1aoserver-new:8607 localhost:5555'
+
+print(f'Overriding EPICS address list to: {addrs}')
+os.environ['EPICS_CA_ADDR_LIST'] = addrs
+os.environ['EPICS_CA_AUTO_ADDR_LIST'] = 'NO'
+
+# Keck library includes
+import ktl  # provided by kroot/ktl/keyword/python
+import kPyQt  # provided by kroot/kui/kPyQt
+
+import logging, coloredlogs
+import argparse
+import sys
+import datetime
+import base64
+from dateutil.parser import isoparse
+import requests
+import io
+from enum import Enum, auto
+import urllib
+import functools
+
+from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5.QtWidgets import QStatusBar, QMessageBox, QWidget, QVBoxLayout, QLabel, QPushButton, \
+    QToolButton, QSpacerItem, QSizePolicy, QFileDialog, QShortcut, QLCDNumber, QLayout
+from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtGui import QFont, QIcon, QPixmap, QImage, QIntValidator, QDoubleValidator, QKeySequence
+from PyQt5.Qt import QApplication
+
+from PToggle import PToggle, PAnimatedToggle
+
+from datetime import datetime
+</code></pre>
+<h5 id="constants-showdialog-function-and-state-machine-class">Constants, showDialog function, and state machine class</h5>
+<p>These are all of the constants used throughout the code. A showDialog function is included to be called whenever QMessageBoxes are used. The code was structured using state machines.</p>
+<pre><code class="language-python">
+debug = False
+
+SECONDS = 1
+FONTBOLD = 'Montserrat SemiBold'
+FONTLIGHT = 'Montserrat Light'
+STATUSBAR_WHITE_STYLE = 'QStatusBar{padding-left:8px;background:white;color:black;font-weight:bold;}'
+STATUSBAR_YELLOW_STYLE = 'QStatusBar{padding-left:8px;background:yellow;color:black;font-weight:bold;}'
+EDIT_STYLE = 'font: 25 14pt &quot;Montserrat SemiBold&quot;;'
+MODE_CLEAR_STYLE = 'background-color: rgb(255, 255, 255);'
+MODE_SET_STYLE = 'background-color: rgb(0, 170, 0);'
+MODE_UNSET_STYLE = 'background-color: rgb(170, 170, 170);'
+
+STATUS_RED_STYLE = 'background-color: rgb(255, 0, 0);'
+STATUS_GREEN_STYLE = 'background-color: rgb(0, 255, 0);'
+MESSAGE_LIMIT = 100
+
+
+class TelSimStates(Enum):
+    OFF = 0
+    ON = auto()
+    IDLE = auto()
+    MOVE_ALT = auto()
+    AWAIT_ALT = auto()
+    MOVE_WIND = auto()
+    AWAIT_WIND = auto()
+    STOPPED = auto()
+    CLEANUP = auto()
+
+
+def showDialog(text, yes=False, cancel=False):
+    '''
+    Show a message box to the user.
+
+    :param text: The message to be displayed.
+    :param yes: Use &quot;Yes/No&quot; instead of &quot;OK/Cancel&quot;
+    :param cancel: Show a Cancel button, versus just OK.
+    :return: Nothing.
+    '''
+
+    # Create a message box
+    msgBox = QtWidgets.QMessageBox()
+    msgBox.setIcon(QMessageBox.Information)
+    msgBox.setText(text)
+    msgBox.setWindowTitle('Message')
+
+    # Add buttons, either OK or OK+Cancel or Yes+No
+    if yes:
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    elif cancel:
+        msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+    else:
+        msgBox.setStandardButtons(QMessageBox.Ok)
+
+    # Test the return from the message box
+    returnValue = msgBox.exec()
+    if returnValue in [QMessageBox.Ok, QMessageBox.Yes]:
+        return True
+    else:
+        return False
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="about/" class="btn btn-neutral float-right" title="About">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+    
+      <span><a href="about/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '.';</script>
+    <script src="js/theme_extra.js" defer></script>
+    <script src="js/theme.js" defer></script>
+      <script src="search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
+
+<!--
+MkDocs version : 1.3.0
+Build Date UTC : 2022-07-14 22:11:19.357187+00:00
+-->
