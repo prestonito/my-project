@@ -43,15 +43,23 @@
               <ul class="current">
                 <li class="toctree-l1 current"><a class="reference internal current" href=".">Home</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#author-preston-ito">Author: Preston Ito</a>
+    <li class="toctree-l2"><a class="reference internal" href="#codeui-file-directory">Code/.ui file directory</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#imports-and-kpython-address">Imports and KPython Address</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#constants-showdialog-function-and-state-machine-class">Constants, showDialog function, and state machine class</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#the-initializer-function">The initializer function</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#setup-ui">Setup UI</a>
         <ul>
-    <li class="toctree-l3"><a class="reference internal" href="#bash-example">bash example</a>
+    <li class="toctree-l3"><a class="reference internal" href="#display">Display</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#python-example">python example</a>
+    <li class="toctree-l3"><a class="reference internal" href="#timers">Timers</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#imports-and-kpython-address">Imports and KPython Address</a>
+    <li class="toctree-l3"><a class="reference internal" href="#actions">Actions</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#constants-showdialog-function-and-state-machine-class">Constants, showDialog function, and state machine class</a>
+    <li class="toctree-l3"><a class="reference internal" href="#channels">Channels</a>
     </li>
         </ul>
     </li>
@@ -86,16 +94,21 @@
             <div class="section" itemprop="articleBody">
               
                 <h2 id="telsim-gui-documentation">TelSIM GUI Documentation</h2>
-<h4 id="author-preston-ito">Author: Preston Ito</h4>
-<h5 id="bash-example">bash example</h5>
-<p>this is a simple bash example </p>
-<pre><code class="language-bash">python3 -m mkdocs serve
+<p><strong>Author: Preston Ito</strong> <br>
+<strong>Date: 14 July 2022</strong></p>
+<hr />
+<h3 id="codeui-file-directory">Code/.ui file directory</h3>
+<p>The two components needed for this project are the python file and the .ui file. The .ui file is essentialy the layout of the GUI, and is created in Qt Designer. Both files can be found at:</p>
+<pre><code class="language-bash">/usr/local/home/pito/kroot/src/kss/ao/tsim/TelSimGUI
 </code></pre>
-<h5 id="python-example">python example</h5>
-<p>this is a simple python example</p>
-<pre><code class="language-python">&gt;&gt;&gt; import subsystem
+<p>The final python file is called</p>
+<pre><code class="language-bash">1SMGUI.py
 </code></pre>
-<h5 id="imports-and-kpython-address">Imports and KPython Address</h5>
+<p>and the final .ui file is called</p>
+<pre><code class="language-bash">dummy.ui
+</code></pre>
+<p>One can add/remove widgets to the .ui file and reconfigure them accordingly. Breaking the layout is necessary to reformatting the widgets. Note: It is reccommended to make a copy of the .ui file and edit that newly created version to keep the working .ui file untouched, because Qt Designer can be finicky and difficult to work with.</p>
+<h3 id="imports-and-kpython-address">Imports and KPython Address</h3>
 <p>These are all the imports necessary for the code. It also has KPython address and sets up EPICS channels for translation stage simulators. A good chunk of this code comes from another GUI project created by Paul Richards. His source code was used as a template for this GUI.</p>
 <pre><code class="language-python">#! @KPYTHON3@
 #
@@ -142,7 +155,7 @@ from PToggle import PToggle, PAnimatedToggle
 
 from datetime import datetime
 </code></pre>
-<h5 id="constants-showdialog-function-and-state-machine-class">Constants, showDialog function, and state machine class</h5>
+<h3 id="constants-showdialog-function-and-state-machine-class">Constants, showDialog function, and state machine class</h3>
 <p>These are all of the constants used throughout the code. A showDialog function is included to be called whenever QMessageBoxes are used. The code was structured using state machines.</p>
 <pre><code class="language-python">
 debug = False
@@ -205,6 +218,96 @@ def showDialog(text, yes=False, cancel=False):
     else:
         return False
 </code></pre>
+<h3 id="the-initializer-function">The initializer function</h3>
+<pre><code class="language-python">def __init__(self, *args, **kwargs):
+
+        # self.list = None
+        self.popups = {}
+        self.template = None
+
+        # Make access to data be thread safe with a mutex (chart data, in particular)
+        self._mutex = QtCore.QMutex()
+
+        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
+
+        # Load the UI file
+        uifile = 'dummy.ui'
+        path = '.'
+        filename = os.path.join(path, uifile)
+
+        if not os.path.exists(filename):
+            filename = os.path.join(os.environ['KROOT'], 'rel/uno/default/data', uifile)
+
+        uic.loadUi(filename, self)
+</code></pre>
+<p>To load a new .ui file, change the line:</p>
+<pre><code class="language-python">uifile = '{NEW_FILE.UI}'
+</code></pre>
+<h3 id="setup-ui">Setup UI</h3>
+<p>This is where all of the setup occurs; Everything from setting the GUI title to connecting to simulator channels.</p>
+<h4 id="display"><em>Display</em></h4>
+<p>Some display features are edited here. A list of widgets are kept to enable/disable with ease.</p>
+<pre><code class="language-python"> def setupUI(self, channels=None):
+
+        title = 'Telescope Simulator GUI'
+        self.setWindowTitle(title)
+
+        # -----------------------------------------------------------------------------
+        # Make the menu bar work the same across all platforms (looking at you, MacOS)
+        self.menubar.setNativeMenuBar(False)
+
+        # Enabling/disabling feature when TelSIM button pressed
+        self.controls = [self.windTSBox, self.TSBox, self.altGroupBox, self.wavefrontGroupBox, self.fileGroupBox, self.loopocBox, self.loopControlLabel]
+
+</code></pre>
+<h4 id="timers"><em>Timers</em></h4>
+<p>The countdownTimer (the timer used for the display countdown while Wind TS is moving) is created here. 'Setting single shot' ensures that the timer only runs once and doesn't keep repeating once it finishes counting down. </p>
+<pre><code class="language-python"># Timers
+        self.countdownTimer = QTimer()          # Display timer
+        self.countdownTimer.setSingleShot(True)
+        self.LCDnumbers.display(&quot;0.00&quot;)
+        self.secondsToMove = 0
+</code></pre>
+<h4 id="actions"><em>Actions</em></h4>
+<p>Connects buttons/text fields/radio buttons to their respective functions. For the input boxes, set a boolean attribute to ensure background color change only when user is editing (and not when it gets signals from the channel).</p>
+<pre><code class="language-python"># Actions! Connects buttons/text fields to functions
+        self.selectFileButton.clicked.connect(self.fileSelection)
+        self.reconstructorButton.clicked.connect(self.reconstructorSelection)
+        self.gainInput.editingFinished.connect(lambda: self.gainCheck(self.gainInput.text()))
+        self.frameRateInput.editingFinished.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+        self.bin.toggled.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+        self.unbin.toggled.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+
+        # Creates 'changed' attributes for the background color feature while editing
+        setattr(self.posBox, 'changed', False)
+        self.posBox.editingFinished.connect(lambda: self.posCheck(self.posBox.text()))
+        self.posBox.textChanged.connect(lambda: self.editTextChanged(self.posBox))
+
+        setattr(self.velBox, 'changed', False)
+        self.velBox.editingFinished.connect(lambda: self.velCheck(self.velBox.text()))
+        self.velBox.textChanged.connect(lambda: self.editTextChanged(self.velBox))
+
+        setattr(self.accelBox, 'changed', False)
+        self.accelBox.editingFinished.connect(lambda: self.accelCheck(self.accelBox.text()))
+        self.accelBox.textChanged.connect(lambda: self.editTextChanged(self.accelBox))
+
+        setattr(self.altBox, 'changed', False)
+        self.altBox.editingFinished.connect(lambda: self.altCheck(self.altBox.text()))
+        self.altBox.textChanged.connect(lambda: self.editTextChanged(self.altBox))
+</code></pre>
+<h4 id="channels">Channels</h4>
+<p>Connects to the different channels. The different types are RBV (read back value), VAL (position value), VELO (velocity), ACCL (acceleration), MOVN (returns moving status), SPMG (returns one of these values: Stop, Pause, Move, Go). Note: Writing a position value must be done to the .VAL, while reading back it's position is done through .RBV.</p>
+<pre><code class="language-python"># Channel creation for the emulator
+        self.posChan = kPyQt.caFactory(&quot;wndsim:ln:m1.RBV&quot;, kPyQt.Channel.caFloat)
+        self.posWritingChan = kPyQt.caFactory(&quot;wndsim:ln:m1.VAL&quot;, kPyQt.Channel.caFloat)
+        self.velChan = kPyQt.caFactory(&quot;wndsim:ln:m1.VELO&quot;, kPyQt.Channel.caFloat)
+        self.accelChan = kPyQt.caFactory(&quot;wndsim:ln:m1.ACCL&quot;, kPyQt.Channel.caFloat)
+        self.altChan = kPyQt.caFactory(&quot;wndsim:ln:m2.RBV&quot;, kPyQt.Channel.caFloat)
+        self.altWritingChan = kPyQt.caFactory(&quot;wndsim:ln:m2.VAL&quot;, kPyQt.Channel.caFloat)
+        self.altMovingChan = kPyQt.caFactory(&quot;wndsim:ln:m2.MOVN&quot;, kPyQt.Channel.caFloat)
+        self.windStopChan = kPyQt.caFactory(&quot;wndsim:ln:m1.SPMG&quot;, kPyQt.Channel.caFloat)
+        self.altStopChan = kPyQt.caFactory(&quot;wndsim:ln:m2.SPMG&quot;, kPyQt.Channel.caFloat)
+</code></pre>
               
             </div>
           </div><footer>
@@ -252,5 +355,5 @@ def showDialog(text, yes=False, cancel=False):
 
 <!--
 MkDocs version : 1.3.0
-Build Date UTC : 2022-07-14 22:17:37.713376+00:00
+Build Date UTC : 2022-07-15 18:21:51.401125+00:00
 -->
