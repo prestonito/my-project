@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://telsimguidocumentation.com/documentation/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Code Documentation - TelSIM GUI Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Code Documentation";
+        var mkdocs_page_input_path = "documentation.md";
+        var mkdocs_page_url = "/documentation/";
+      </script>
+    
+    <script src="../js/jquery-3.6.0.min.js" defer></script>
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+      <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> TelSIM GUI Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">User Manual</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="./">Code Documentation</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#details-directory-imports-etc">Details (directory, imports, etc.)</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#codeui-file-directory">Code/.ui file directory</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#imports-and-kpython-address">Imports and KPython Address</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#constants-showdialog-function-and-state-machine-class">Constants, showDialog function, and state machine class</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#the-initializer-function">The initializer function</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#setup-ui">Setup UI</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#display">Display</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#timers">Timers</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#actions">Actions</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#channels">Channels</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#toggle-visual">Toggle Visual</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-machine-support">State machine support</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#functions-to-trigger-states">Functions to trigger states</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#state-machine">State Machine</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#state-off">State: OFF</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-on">State: ON</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-idle">State: IDLE</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-move_alt">State: MOVE_ALT</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-await_alt">State: AWAIT_ALT</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-move_wind">State: MOVE_WIND</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-await_wind">State: AWAIT_WIND</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-stopped">State: STOPPED</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-cleanup">State: CLEANUP</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#state-await_cleanup">State: AWAIT_CLEANUP</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#color-changing">Color changing</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#edittextchanged-and-editfinished">editTextChanged and editFinished</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#blocking-signals">Blocking signals</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#input-verification-and-writing">Input Verification and Writing</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#validators">Validators</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#writing-to-channel">Writing to channel</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#main-function">Main function</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#toggle-code">Toggle Code</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">TelSIM GUI Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" alt="Docs"></a> &raquo;</li><li>Code Documentation</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="code-documentation">Code Documentation</h2>
+<hr />
+<h3 id="details-directory-imports-etc">Details (directory, imports, etc.)</h3>
+<h4 id="codeui-file-directory"><em>Code/.ui file directory</em></h4>
+<p>This project is locally stored on vm-contractor1. The two components needed for this project are the python file and the .ui file. The .ui file is essentialy the layout of the GUI, and is created in Qt Designer. Both files can be found at:</p>
+<pre><code class="language-bash">/usr/local/home/pito/kroot/src/kss/ao/tsim/TelSimGUI
+</code></pre>
+<p>The final python file is called</p>
+<pre><code class="language-bash">telsim.py
+</code></pre>
+<p>and the final .ui file is called</p>
+<pre><code class="language-bash">telsim.ui
+</code></pre>
+<p>One can add/remove widgets to the .ui file and reconfigure them accordingly. Breaking the layout is necessary to reformatting the widgets. </p>
+<h4 id="imports-and-kpython-address"><em>Imports and KPython Address</em></h4>
+<p>These are all the imports necessary for the code. It also has KPython address and sets up EPICS channels for translation stage simulators. A good chunk of this code comes from another GUI project created by Paul Richards. His source code was used as a template for this GUI.</p>
+<pre><code class="language-python">#! @KPYTHON3@
+#
+# kpython safely sets RELDIR, KROOT, LROOT, and PYTHONPATH before invoking
+# the actual Python interpreter.
+
+# Setup an EPICS address list if one is not already defined
+
+import os
+import subprocess
+import datetime
+import time
+
+addrs = 'localhost:5064 vm-k1epicsgateway:5064 vm-k2epicsgateway:5064 k1aoserver-new:8607 localhost:5555 localhost:5556'
+
+print(f'Overriding EPICS address list to: {addrs}')
+os.environ['EPICS_CA_ADDR_LIST'] = addrs
+os.environ['EPICS_CA_AUTO_ADDR_LIST'] = 'NO'
+
+# Keck library includes
+import ktl  # provided by kroot/ktl/keyword/python
+import kPyQt  # provided by kroot/kui/kPyQt
+
+import logging, coloredlogs
+import argparse
+import sys
+import datetime
+import base64
+from dateutil.parser import isoparse
+import requests
+import io
+from enum import Enum, auto
+import urllib
+import functools
+
+from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5.QtWidgets import QStatusBar, QMessageBox, QWidget, QVBoxLayout, QLabel, QPushButton, \
+    QToolButton, QSpacerItem, QSizePolicy, QFileDialog, QShortcut, QLCDNumber, QLayout
+from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtGui import QFont, QIcon, QPixmap, QImage, QIntValidator, QDoubleValidator, QKeySequence
+from PyQt5.Qt import QApplication
+
+from PToggle import PToggle, PAnimatedToggle
+
+from datetime import datetime
+
+</code></pre>
+<h4 id="constants-showdialog-function-and-state-machine-class"><em>Constants, showDialog function, and state machine class</em></h4>
+<p>These are all of the constants used throughout the code. A showDialog function is included to be called whenever QMessageBoxes are used. The code was structured using state machines.</p>
+<pre><code class="language-python">
+debug = False
+
+SECONDS = 1
+UNBINNED_MODE = 2000
+BINNED_MODE = 3600
+FONTBOLD = 'Montserrat SemiBold'
+FONTLIGHT = 'Montserrat Light'
+STATUSBAR_WHITE_STYLE = 'QStatusBar{padding-left:8px;background:white;color:black;font-weight:bold;}'
+STATUSBAR_YELLOW_STYLE = 'QStatusBar{padding-left:8px;background:yellow;color:black;font-weight:bold;}'
+EDIT_STYLE = 'font: 25 14pt &quot;Montserrat SemiBold&quot;;'
+MODE_CLEAR_STYLE = 'background-color: rgb(255, 255, 255);'
+MODE_SET_STYLE = 'background-color: rgb(0, 170, 0);'
+MODE_UNSET_STYLE = 'background-color: rgb(170, 170, 170);'
+
+STATUS_RED_STYLE = 'background-color: rgb(255, 0, 0);'
+STATUS_GREEN_STYLE = 'background-color: rgb(0, 255, 0);'
+MESSAGE_LIMIT = 100
+
+
+class TelSimStates(Enum):
+    OFF = 0
+    ON = auto()
+    IDLE = auto()
+    MOVE_ALT = auto()
+    AWAIT_ALT = auto()
+    MOVE_WIND = auto()
+    AWAIT_WIND = auto()
+    STOPPED = auto()
+    CLEANUP = auto()
+    AWAIT_CLEANUP = auto()
+
+
+def showDialog(text, yes=False, cancel=False):
+    '''
+    Show a message box to the user.
+
+    :param text: The message to be displayed.
+    :param yes: Use &quot;Yes/No&quot; instead of &quot;OK/Cancel&quot;
+    :param cancel: Show a Cancel button, versus just OK.
+    :return: Nothing.
+    '''
+
+    # Create a message box
+    msgBox = QtWidgets.QMessageBox()
+    msgBox.setIcon(QMessageBox.Information)
+    msgBox.setText(text)
+    msgBox.setWindowTitle('Message')
+
+    # Add buttons, either OK or OK+Cancel or Yes+No
+    if yes:
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    elif cancel:
+        msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+    else:
+        msgBox.setStandardButtons(QMessageBox.Ok)
+
+    # Test the return from the message box
+    returnValue = msgBox.exec()
+    if returnValue in [QMessageBox.Ok, QMessageBox.Yes]:
+        return True
+    else:
+        return False
+</code></pre>
+<h4 id="the-initializer-function"><em>The initializer function</em></h4>
+<pre><code class="language-python">def __init__(self, *args, **kwargs):
+
+        # self.list = None
+        self.popups = {}
+        self.template = None
+
+        # Make access to data be thread safe with a mutex (chart data, in particular)
+        self._mutex = QtCore.QMutex()
+
+        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
+
+        # Load the UI file
+        uifile = 'dummy.ui'
+        path = '.'
+        filename = os.path.join(path, uifile)
+
+        if not os.path.exists(filename):
+            filename = os.path.join(os.environ['KROOT'], 'rel/uno/default/data', uifile)
+
+        uic.loadUi(filename, self)
+</code></pre>
+<p>To load a new .ui file, change the line:</p>
+<pre><code class="language-python">uifile = '{NEW_FILE.UI}'
+</code></pre>
+<h3 id="setup-ui">Setup UI</h3>
+<p>This is where all of the setup occurs; Everything from setting the GUI title to connecting to simulator channels.</p>
+<h4 id="display"><em>Display</em></h4>
+<p>Some display features are edited here. A list of widgets are kept to enable/disable with ease.</p>
+<pre><code class="language-python"> def setupUI(self, channels=None):
+
+        title = 'Telescope Simulator GUI'
+        self.setWindowTitle(title)
+
+        # -----------------------------------------------------------------------------
+        # Make the menu bar work the same across all platforms (looking at you, MacOS)
+        self.menubar.setNativeMenuBar(False)
+
+        # Enabling/disabling feature when TelSIM button pressed
+        self.controls = [self.windTSBox, self.TSBox, self.altGroupBox, self.wavefrontGroupBox, self.fileGroupBox, self.loopocBox, self.loopControlLabel]
+
+</code></pre>
+<h4 id="timers"><em>Timers</em></h4>
+<p>The countdownTimer (the timer used for the display countdown while Wind TS is moving) is created here. 'Setting single shot' ensures that the timer only runs once and doesn't keep repeating once it finishes counting down. </p>
+<pre><code class="language-python"># Timers
+        self.countdownTimer = QTimer()          # Display timer
+        self.countdownTimer.setSingleShot(True)
+        self.LCDnumbers.display(&quot;0.00&quot;)
+        self.secondsToMove = 0
+</code></pre>
+<h4 id="actions"><em>Actions</em></h4>
+<p>Connects buttons/text fields/radio buttons to their respective functions. For the input boxes, set a boolean attribute to ensure background color change only when user is editing (and not when it gets signals from the channel).</p>
+<pre><code class="language-python"># Actions! Connects buttons/text fields to functions
+        self.selectFileButton.clicked.connect(self.fileSelection)
+        self.reconstructorButton.clicked.connect(self.reconstructorSelection)
+        self.gainInput.editingFinished.connect(lambda: self.gainCheck(self.gainInput.text()))
+        self.frameRateInput.editingFinished.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+        self.bin.toggled.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+        self.unbin.toggled.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+
+        # Creates 'changed' attributes for the background color feature while editing
+        setattr(self.posBox, 'changed', False)
+        self.posBox.editingFinished.connect(lambda: self.posCheck(self.posBox.text()))
+        self.posBox.textChanged.connect(lambda: self.editTextChanged(self.posBox))
+
+        setattr(self.velBox, 'changed', False)
+        self.velBox.editingFinished.connect(lambda: self.velCheck(self.velBox.text()))
+        self.velBox.textChanged.connect(lambda: self.editTextChanged(self.velBox))
+
+        setattr(self.accelBox, 'changed', False)
+        self.accelBox.editingFinished.connect(lambda: self.accelCheck(self.accelBox.text()))
+        self.accelBox.textChanged.connect(lambda: self.editTextChanged(self.accelBox))
+
+        setattr(self.altBox, 'changed', False)
+        self.altBox.editingFinished.connect(lambda: self.altCheck(self.altBox.text()))
+        self.altBox.textChanged.connect(lambda: self.editTextChanged(self.altBox))
+</code></pre>
+<h4 id="channels"><em>Channels</em></h4>
+<p>Connects to the different channels. The different types are RBV (read back value), VAL (position value), VELO (velocity), ACCL (acceleration), MOVN (returns moving status), SPMG (returns one of these values: Stop, Pause, Move, Go). Note: Writing a position value must be done to the .VAL, while reading back it's position is done through .RBV.</p>
+<pre><code class="language-python"># Channel creation for the emulator
+        self.posChan = kPyQt.caFactory(&quot;wndsim:ln:m1.RBV&quot;, kPyQt.Channel.caFloat)
+        self.posWritingChan = kPyQt.caFactory(&quot;wndsim:ln:m1.VAL&quot;, kPyQt.Channel.caFloat)
+        self.velChan = kPyQt.caFactory(&quot;wndsim:ln:m1.VELO&quot;, kPyQt.Channel.caFloat)
+        self.accelChan = kPyQt.caFactory(&quot;wndsim:ln:m1.ACCL&quot;, kPyQt.Channel.caFloat)
+        self.altChan = kPyQt.caFactory(&quot;altsim:ln:m1.RBV&quot;, kPyQt.Channel.caFloat)
+        self.altWritingChan = kPyQt.caFactory(&quot;altsim:ln:m1.VAL&quot;, kPyQt.Channel.caFloat)
+        self.altMovingChan = kPyQt.caFactory(&quot;altsim:ln:m1.MOVN&quot;, kPyQt.Channel.caFloat)
+        self.windStopChan = kPyQt.caFactory(&quot;wndsim:ln:m1.SPMG&quot;, kPyQt.Channel.caFloat)
+        self.altStopChan = kPyQt.caFactory(&quot;altsim:ln:m1.SPMG&quot;, kPyQt.Channel.caFloat)
+
+</code></pre>
+<h4 id="toggle-visual"><em>Toggle Visual</em></h4>
+<p><em>Note: PToggle is a separate python file that was imported at the top of the code. The toggle code can be found <a href="/documentation/#toggle-code">here.</a></em> Below is the section that implements PToggle to create a toggle button for the two translation stage's connection status.</p>
+<pre><code class="language-python"># ------ Translation stages' toggles --------------------------------------------
+        self.TS1 = PToggle(handle_color=Qt.red, checked_color=Qt.green)
+        TS1lay = QVBoxLayout()
+        TS1lay.addWidget(self.TS1)
+        self.TS1tog.setLayout(TS1lay)
+        self.TS1.setCheckState(Qt.Unchecked)
+
+        self.TS2 = PToggle(handle_color=Qt.red, checked_color=Qt.green)
+        TS2lay = QVBoxLayout()
+        TS2lay.addWidget(self.TS2)
+        self.TS2tog.setLayout(TS2lay)
+        self.TS2.setCheckState(Qt.Unchecked)
+</code></pre>
+<h4 id="state-machine-support"><em>State machine support</em></h4>
+<p>Code that connects some functions necessary to transition between states in the state machine.</p>
+<pre><code class="language-python">        self.setupTelSIMButtonWasPressed = False
+        self.setupTelSIMButton.clicked.connect(self.setupTelSIMButtonPressed)
+        self.closeTelSIMButtonWasPressed = False
+        self.closeTelSIMButton.clicked.connect(self.closeTelSIMButtonPressed)
+        self.startButtonWasPressed = False
+        self.startButton.clicked.connect(self.startButtonPressed)
+        self.stopButtonWasPressed = False
+        self.stopButton.clicked.connect(self.stopButtonPressed)
+
+
+        self.state = TelSimStates.OFF
+        self.stateMachineTimer = QTimer()
+        self.stateMachineTimer.timeout.connect(self.stateMachine)
+        self.stateMachineTimer.start(75)
+
+</code></pre>
+<h4 id="functions-to-trigger-states"><em>Functions to trigger states</em></h4>
+<p>Creation of the actual functions connected to the buttons (start, stop, setupTelSIM, closeTelSIM).</p>
+<pre><code class="language-python">    def setupTelSIMButtonPressed(self):
+        &quot;&quot;&quot;
+        Trigger the state machine with a button press.
+
+        :return:
+        &quot;&quot;&quot;
+        self.setupTelSIMButtonWasPressed = True
+
+    def closeTelSIMButtonPressed(self):
+        &quot;&quot;&quot;
+        Trigger the state machine with a button press.
+
+        :return:
+        &quot;&quot;&quot;
+        self.closeTelSIMButtonWasPressed = True
+
+    def startButtonPressed(self):
+        &quot;&quot;&quot;
+        Trigger MOVE_ALT stage with a button press.
+
+        :return:
+        &quot;&quot;&quot;
+        self.startButtonWasPressed = True
+
+    def stopButtonPressed(self):
+        &quot;&quot;&quot;
+        Trigger MOVE_ALT stage with a button press.
+
+        :return:
+        &quot;&quot;&quot;
+        self.stopButtonWasPressed = True
+
+
+</code></pre>
+<h3 id="state-machine">State Machine</h3>
+<p>Function that starts the state machine. </p>
+<pre><code class="language-python">def stateMachine(self):
+        &quot;&quot;&quot;
+        State machine processing.
+
+        :return:
+        &quot;&quot;&quot;
+        self.statusbar.showMessage(f'STATE: {self.state.name}')
+</code></pre>
+<h4 id="state-off"><em>State: OFF</em></h4>
+<p>The OFF state has everything disabled except for the setupTelSIM button. Transitions to ON state if setupTelSIM button was pressed.</p>
+<pre><code class="language-python"># ----- STATE 0 ------------------------------------------------
+        if self.state == TelSimStates.OFF:
+
+            # Update GUI widgets for the OFF state
+            self.startButton.setVisible(True)
+            self.startButton.setEnabled(False)
+            self.stopButton.setVisible(False)
+
+            self.setupTelSIMButton.setEnabled(True)
+            self.setupTelSIMButton.setVisible(True)
+
+            self.closeTelSIMButton.setEnabled(False)
+            self.closeTelSIMButton.setVisible(False)
+
+            for i in self.controls:
+                i.setEnabled(False)  # Disable the widgets
+
+            # If setup is pressed, advance to IDLE
+            if self.setupTelSIMButtonWasPressed:
+                self.setupTelSIMButtonWasPressed = False
+
+                # Advance the state machine
+                self.state = TelSimStates.ON
+                return
+
+            return
+</code></pre>
+<h4 id="state-on"><em>State: ON</em></h4>
+<p>The ON state connects the callbacks to start displaying the constant refreshing of the pos/vel/accel/alt values. <em>Note: This had to be separated from the IDLE state because .runCallbacks() only needed to be called once upon starting up. Otherwise, the input boxes would always refresh and make it difficult for the user to edit.</em></p>
+<pre><code class="language-python"># ----- STATE 1 ---------------------------------------------
+        elif self.state == TelSimStates.ON:
+
+            # Connects to the channels to read and display the values
+            self.posChan.floatCallback.connect(self.posBoxSetText)
+            self.posChan.runCallbacks()
+            self.velChan.floatCallback.connect(self.velBoxSetText)
+            self.velChan.runCallbacks()
+            self.accelChan.floatCallback.connect(self.accelBoxSetText)
+            self.accelChan.runCallbacks()
+            self.altChan.floatCallback.connect(self.altBoxSetText)
+            self.altChan.runCallbacks()
+
+            self.state = TelSimStates.IDLE
+            return
+</code></pre>
+<h4 id="state-idle"><em>State: IDLE</em></h4>
+<p>The IDLE state enables all of the input widgets and waits for the user to hit the Start button or the closeTelSIM button and changes the state accordingly.</p>
+<pre><code class="language-python"> # ----- STATE 2 -----------------------------------------
+        elif self.state == TelSimStates.IDLE:
+
+            # Update GUI widgets for the ON state
+            self.startButton.setVisible(True)
+            self.startButton.setEnabled(True)
+            self.stopButton.setVisible(False)
+            self.stopButton.setEnabled(False)
+            self.setupTelSIMButton.setEnabled(False)
+            self.setupTelSIMButton.setVisible(False)
+            self.closeTelSIMButton.setEnabled(True)
+            self.closeTelSIMButton.setVisible(True)
+            self.LCDnumbers.display(&quot;0.00&quot;)
+
+            for i in self.controls:
+                i.setEnabled(True)  # Enable the widgets
+
+            if self.startButtonWasPressed:
+                self.startButtonWasPressed = False
+                self.state = TelSimStates.MOVE_ALT
+                return
+
+            if self.closeTelSIMButtonWasPressed:
+                self.closeTelSIMButtonWasPressed = False
+                self.state = TelSimStates.CLEANUP
+                return
+
+            return
+</code></pre>
+<h4 id="state-move_alt"><em>State: MOVE_ALT</em></h4>
+<p>The MOVE_ALT state does a rough calculation of amount of time to move the wind TS (the timer is only used for the wind TS, not the alt TS. The timer and the wind TS doesn't actually start running until the alt TS has finished moving) and stores that in <em>self.secondsToMove</em>. It also uses the showDialog function (shown in the Details section) to ask the user to verify the start. Once verified, it will write '3' to the .SPMG channel (3 is equal to 'MOVE', in case it's currently stopped) before writing the value in the altbox to the .VAL channel. Transition to the AWAIT_ALT state is automatic once these values have been written.</p>
+<pre><code class="language-python"># ----- STATE 3 -----------------------------------------
+        elif self.state == TelSimStates.MOVE_ALT:
+
+            self.finalPos = self.posBox.text()
+            self.finalAlt = self.altBox.text()
+
+            self.initialPos = float(self.posChan.read())
+            self.secondsToMove = abs(float(self.initialPos) - float(self.finalPos)) / float(self.velBox.text())
+            print(self.secondsToMove)
+            self.LCDnumbers.display(f&quot;{self.secondsToMove:0.2f}&quot;)
+            self.initialAlt = float(self.altChan.read())
+            if showDialog(&quot;Are you sure you want to START?&quot;, yes=True, cancel=True):
+                for i in self.controls:
+                    i.setEnabled(False)  # Disable the widgets
+                self.startButton.setVisible(False)
+                self.startButton.setEnabled(False)
+                self.stopButton.setVisible(True)
+                self.stopButton.setEnabled(True)
+                print(&quot;altBox.text: &quot; + self.altBox.text())
+                # if self.altStopChan.read() == &quot;0&quot;:
+                self.altStopChan.write(&quot;3&quot;)
+                self.altWrite(self.altBox.text())
+                self.altBox.changed = False
+                self.state = TelSimStates.AWAIT_ALT
+                return
+            else:
+                self.state = TelSimStates.IDLE
+                return
+</code></pre>
+<h4 id="state-await_alt"><em>State: AWAIT_ALT</em></h4>
+<p>Waits for the alt TS to get to its destination. Once it reaches its destination, transitions to the MOVE_WIND state. If Stop button was pressed, transitions to STOPPED state.</p>
+<pre><code class="language-python"># STATE 3
+        elif self.state == TelSimStates.AWAIT_ALT:
+            # use less than or equal to instead of ==
+            x = float(self.altChan.read())
+            y = float(self.finalAlt)
+            if x == y:
+                self.state = TelSimStates.MOVE_WIND
+                return
+            if self.stopButtonWasPressed:
+                self.stopButtonWasPressed = False
+                self.state = TelSimStates.STOPPED
+                return
+            return
+</code></pre>
+<h4 id="state-move_wind"><em>State: MOVE_WIND</em></h4>
+<p>Acts similarly to the MOVE_ALT state. Also starts the timer with the <em>self.secondsToMove</em> value calculated in the MOVE_ALT state. Transitions to AWAIT_WIND state automatically. </p>
+<pre><code class="language-python"># STATE 4
+       elif self.state == TelSimStates.MOVE_WIND:
+            print(&quot;move wind&quot;)
+            self.posBox.changed = False
+            self.velBox.changed = False
+            self.accelBox.changed = False
+            self.windStopChan.write(&quot;3&quot;)
+            self.accelWrite(self.accelBox.text())
+            self.velWrite(self.velBox.text())
+            self.posWrite(self.posBox.text())
+
+            self.countdownTimer.start(int(self.secondsToMove) * 1000)
+            self.state = TelSimStates.AWAIT_WIND
+            return
+</code></pre>
+<h4 id="state-await_wind"><em>State: AWAIT_WIND</em></h4>
+<p>Acts similarly to the AWAIT_ALT state. Once the wind TS reaches its destination, transitions to the IDLE state. </p>
+<pre><code class="language-python"># STATE 5
+        elif self.state == TelSimStates.AWAIT_WIND:
+            self.timeLeft = self.countdownTimer.remainingTime() / 1000
+            self.LCDnumbers.display(f&quot;{self.timeLeft:0.2f}&quot;)
+            if round(float(self.posChan.read())) == round(float(self.finalPos)):
+                self.state = TelSimStates.IDLE
+                return
+            if self.stopButtonWasPressed:
+                self.stopButtonWasPressed = False
+                self.state = TelSimStates.STOPPED
+                return
+            return
+</code></pre>
+<h4 id="state-stopped"><em>State: STOPPED</em></h4>
+<p>Writes '0' to the two .SPMG channels ('0' is equal to 'Stop') and stops the timer. Automatically transitions to IDLE state.</p>
+<pre><code class="language-python"> # STATE 6
+        elif self.state == TelSimStates.STOPPED:
+            self.windStopChan.write(&quot;0&quot;)
+            self.altStopChan.write(&quot;0&quot;)
+            self.countdownTimer.stop()
+            self.state = TelSimStates.IDLE
+            return
+</code></pre>
+<h4 id="state-cleanup"><em>State: CLEANUP</em></h4>
+<p>Enables/disables widgets accordingly. Sends the two TS to their 'home' position. Automatically transitions to AWAIT_CLEANUP state.</p>
+<pre><code class="language-python"># STATE 7
+        elif self.state == TelSimStates.CLEANUP:
+            print(&quot;cleaning!&quot;)
+            self.closeTelSIMButton.setVisible(False)
+            self.closeTelSIMButton.setEnabled(False)
+            self.setupTelSIMButton.setVisible(True)
+            self.setupTelSIMButton.setEnabled(False)
+            self.startstopBox.setEnabled(False)
+            for i in self.controls:
+                i.setEnabled(False)
+            self.posWrite(0.00)
+            self.velWrite(2.00)
+            self.accelWrite(0.10)
+            self.altWrite(5.0)
+            self.state = TelSimStates.AWAIT_CLEANUP
+            return
+</code></pre>
+<h4 id="state-await_cleanup"><em>State: AWAIT_CLEANUP</em></h4>
+<p>Waits for the two TS to get to their 'home' position before transitioning to OFF state.</p>
+<pre><code class="language-python"># STATE 8
+        elif self.state == TelSimStates.AWAIT_CLEANUP:
+            if float(self.windStopChan.read()) &gt;= 0.0:
+                if float(self.altStopChan.read()) &gt;= 0.0:
+                    if float(self.accelChan.read()) &gt;= 0.1:
+                        if float(self.velChan.read()) &gt;= 2.0:
+                            self.state = TelSimStates.OFF
+                            return
+            return
+</code></pre>
+<h3 id="color-changing">Color changing</h3>
+<h4 id="edittextchanged-and-editfinished"><em>editTextChanged and editFinished</em></h4>
+<p>These functions are responsible for changing the background color to red while the user is inputting a value, and changing it back once they're finished.</p>
+<pre><code class="language-python"># -------------------------------------------------------
+    def editTextChanged(self, edit):
+        '''Qt signal that something was typed in the edit field'''
+        edit.changed = True
+        edit.setStyleSheet('background-color: red')
+# --------------------------------------------------------
+    def editFinished(self, edit):
+        '''Qt signal that the edit field lost focus when editing, revert the value'''
+        if edit.changed:
+            edit.setText(edit.undoText)
+            edit.changed = False
+            edit.setStyleSheet(self.editStyleSheet)
+</code></pre>
+<h4 id="blocking-signals"><em>Blocking signals</em></h4>
+<p>These functions use the attribute 'changed' (that was created in the Setup UI section) to prevent changing the color to red if it's receiving signals from the emulator. That way, it'll only change to red if the user is inputting changes.</p>
+<pre><code class="language-python">ef posBoxSetText(self, val):
+        if not self.posBox.changed:
+            self.posBox.setStyleSheet(&quot;&quot;)
+            self.posBox.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
+            self.posBox.setText(f&quot;{val:0.2f}&quot;)
+            self.posBox.blockSignals(False)  # Turn on signals to the edit, a human is not editing it!
+
+    def velBoxSetText(self, val):
+        if not self.velBox.changed:
+            self.velBox.setStyleSheet(&quot;&quot;)
+            self.velBox.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
+            self.velBox.setText(f&quot;{val:0.2f}&quot;)
+            self.velBox.blockSignals(False)  # Turn on signals to the edit, a human is not editing it!
+
+    def accelBoxSetText(self, val):
+        if not self.accelBox.changed:
+            self.accelBox.setStyleSheet(&quot;&quot;)
+            self.accelBox.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
+            self.accelBox.setText(f&quot;{val:0.2f}&quot;)
+            self.accelBox.blockSignals(False)  # Turn on signals to the edit, a human is not editing it!
+
+    def altBoxSetText(self, val):
+        if not self.altBox.changed:
+            self.altBox.setStyleSheet(&quot;&quot;)
+            self.altBox.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
+            self.altBox.setText(f&quot;{val:0.1f}&quot;)
+            self.altBox.blockSignals(False)  # Turn on signals to the edit, a human is not editing it!
+</code></pre>
+<h3 id="input-verification-and-writing">Input Verification and Writing</h3>
+<h4 id="validators"><em>Validators</em></h4>
+<p>These functions make sure that the value entered in the field is within bounds. If the user is finished editing (clicks away), then the showDialog function is used to give an error message.</p>
+<pre><code class="language-python"> # --- Corrects pos/vel/accel/alt values after edited? --------------------
+    def posCheck(self, msg):
+        '''
+        Makes sure the value entered in the field is within bounds. If not, will show error message. Also assigns
+        self.finalPos used later for calculating time it will take to move
+
+        :param msg: Value entered in posBox text box
+        :return:
+        '''
+        self.posBox.validator = QDoubleValidator(-40.00, 40.00, 2, notation=QDoubleValidator.StandardNotation)
+        if QDoubleValidator.validate(self.posBox.validator, str(msg), 0)[0] != 2:
+            self.posBox.setText(f&quot;{float(self.posChan.read()):0.2f}&quot;)
+            showDialog(&quot;Position must be a float between -40.00 and 40.00&quot;)
+        # else:
+        #     self.finalPos = msg
+
+    def velCheck(self, msg):
+        self.velBox.validator = QDoubleValidator(2.00, 80.00, 2, notation=QDoubleValidator.StandardNotation)
+        if QDoubleValidator.validate(self.velBox.validator, str(msg), 0)[0] != 2:
+            self.velBox.setText(f&quot;{float(self.velChan.read()):0.2f}&quot;)
+            showDialog(&quot;Velocity must be a float between 2.00 and 80.00&quot;)
+        else:
+            self.velVal = msg
+
+    def accelCheck(self, msg):
+        self.accelBox.validator = QDoubleValidator(0.00, 10.00, 2, notation=QDoubleValidator.StandardNotation)
+        if QDoubleValidator.validate(self.accelBox.validator, str(msg), 0)[0] != 2:
+            self.accelBox.setText(f&quot;{float(self.accelChan.read()):0.2f}&quot;)
+            showDialog(&quot;Acceleration must be a float between 0.00 and 10.00&quot;)
+
+    def gainCheck(self, msg):
+        if msg != '':  # DELETE THIS LINE ONCE ACTUALLY CONNECTED
+            self.gainInput.validator = QIntValidator(1, 600, self)
+            if QIntValidator.validate(self.gainInput.validator, str(msg), 0)[0] != 2:
+                self.gainInput.setText(&quot;1&quot;)
+                showDialog(&quot;Gain must be an integer between 1 and 600; automatically reset gain to 1&quot;)
+
+    def altCheck(self, msg):
+        if msg != '':  # DELETE THIS LINE ONCE ACTUALLY CONNECTED
+            self.altBox.validator = QDoubleValidator(5.0, 12.0, 1, notation=QDoubleValidator.StandardNotation)
+            if QDoubleValidator.validate(self.altBox.validator, str(msg), 0)[0] != 2:
+                self.altBox.setText(f&quot;{float(self.altChan.read()):0.1f}&quot;)
+                showDialog(&quot;Altitude must be between 5.0 and 12.0; automatically reset altitude to 5.0&quot;)
+            # else:
+            #     self.finalAlt = msg
+
+    def frameRateCheck(self, msg):
+        if msg != '':  # DELETE THIS LINE ONCE ACTUALLY CONNECTED
+            if self.unbin.isChecked() == True:
+                self.frameRateInput.validator = QIntValidator(1, UNBINNED_MODE, self)
+            else:
+                self.frameRateInput.validator = QIntValidator(1, BINNED_MODE, self)
+            if QIntValidator.validate(self.frameRateInput.validator, str(msg), 0)[0] != 2:
+                self.frameRateInput.setText(&quot;1&quot;)
+                showDialog(&quot;Frame rate must be integer between 1-2000 when in unbinned mode and &quot;
+                           &quot;1-3600 when in binned mode; automatically reset frame to 1&quot;)
+</code></pre>
+<h4 id="writing-to-channel"><em>Writing to channel</em></h4>
+<p>These functions write the value passed through to the appropriate channel. The <em>wait=False</em> in the position and altitude writing channels are necessary to allow the user to stop the motion while the stages are moving to their destination.</p>
+<pre><code class="language-python"># ---- Writes the pos/vel/accel/alt to the emulator --------------------------------------------
+    def posWrite(self, msg):
+        '''
+        Writes the value to the writing channel
+
+        :param msg: Position value
+        '''
+        f = float(msg)
+        self.posWritingChan.write(f, wait=False)
+
+    def velWrite(self, msg):
+        f = float(msg)
+        self.velChan.write(f)
+
+    def accelWrite(self, msg):
+        f = float(msg)
+        self.accelChan.write(f)
+
+    def altWrite(self, msg):
+        f = float(msg)
+        self.altWritingChan.write(f, wait=False)
+</code></pre>
+<h3 id="main-function">Main function</h3>
+<p>This is the standard startup main function for all kPyQt GUIs.</p>
+<pre><code class="language-python">if __name__ == '__main__':
+
+    # -------------------------------------------------------------------------
+    # Commandline arguments
+    parser = argparse.ArgumentParser(description='Turbulence Simulator GUI')
+    parser.add_argument('-d', '--debug', help='Enable debugging output', action='store_true')
+    args = parser.parse_args()
+
+    # Get the debug argument first, as it drives our logging choices
+    if args.debug:
+        debug = True
+
+    # -------------------------------------------------------------------------
+    # Set up the base logger all threads will use, once we know the debug flag
+    coloredlogs.DEFAULT_LOG_FORMAT = '%(asctime)s [%(levelname)s] %(message)s'
+    coloredlogs.DEFAULT_DATE_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+    if debug:
+        coloredlogs.install(level='DEBUG')
+    else:
+        coloredlogs.install(level='INFO')
+    log = logging.getLogger('')
+
+    # Disable the debug logging from Qt
+    logging.getLogger('PyQt5').setLevel(logging.WARNING)
+
+    application = QtWidgets.QApplication(sys.argv)
+    mainwin = TurbulenceSimulatorGUIMain()
+    mainwin.setupUI()
+    # mainwin.setMinimumSize(0, 0)
+    # mainwin.resize(10,10)
+    mainwin.show()
+
+    # Run the Qt application
+    status = kPyQt.run(application)
+    sys.exit(status)
+</code></pre>
+<h3 id="toggle-code">Toggle Code</h3>
+<pre><code class="language-python">from PyQt5.QtCore import (
+    Qt, QSize, QPoint, QPointF, QRectF,
+    QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup,
+    pyqtSlot, pyqtProperty)
+from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtGui import QColor, QBrush, QPaintEvent, QPen, QPainter
+
+from PyQt5.QtCore import pyqtSlot as Slot, pyqtProperty as Property
+
+class PToggle(QCheckBox):
+    &quot;&quot;&quot;Derived from qtwidgets.Toggle at https://github.com/pythonguis/python-qtwidgets/blob/master/qtwidgets/toggle/toggle.py&quot;&quot;&quot;
+
+    _transparent_pen = QPen(Qt.transparent)
+    _light_grey_pen = QPen(Qt.lightGray)
+    _dark_gray_pen = QPen(Qt.darkGray)
+
+    def __init__(self,
+        parent=None,
+        bar_color=Qt.gray,
+        checked_color=&quot;#00B0FF&quot;,
+        handle_color=Qt.white,
+        ):
+        super().__init__(parent)
+
+        # Save our properties on the object via self, so we can access them later
+        # in the paintEvent.
+        self._bar_brush = QBrush(bar_color)
+        self._bar_checked_brush = QBrush(QColor(checked_color).lighter())
+        self._bar_partially_checked_brush = QBrush(Qt.gray)
+
+        self._handle_brush = QBrush(handle_color)
+        self._handle_checked_brush = QBrush(QColor(checked_color))
+        self._handle_partially_checked_brush = QBrush(Qt.gray)
+
+        self._handle_disabled_brush = QBrush(Qt.darkGray)
+
+        # Setup the rest of the widget.
+
+        self.setContentsMargins(8, 0, 8, 0)
+        self._handle_position = 0
+
+        self.stateChanged.connect(self.handle_state_change)
+
+    def sizeHint(self):
+        return QSize(58, 45)
+
+    def hitButton(self, pos: QPoint):
+        return self.contentsRect().contains(pos)
+
+    def paintEvent(self, e: QPaintEvent):
+
+        contRect = self.contentsRect()
+        handleRadius = round(0.24 * contRect.height())
+
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+
+        p.setPen(self._transparent_pen)
+        barRect = QRectF(
+            0, 0,
+            contRect.width() - handleRadius, 0.40 * contRect.height()
+        )
+        barRect.moveCenter(contRect.center())
+        rounding = barRect.height() / 2
+
+        # the handle will move along this line
+        trailLength = contRect.width() - 2 * handleRadius
+        xPos = contRect.x() + handleRadius + trailLength * self._handle_position
+
+        if self.checkState() == Qt.PartiallyChecked:
+            p.setBrush(self._bar_partially_checked_brush)
+            p.drawRoundedRect(barRect, rounding, rounding)
+            # Don't draw the handle if partially checked!
+
+        elif self.checkState() == Qt.Checked:
+            p.setBrush(self._bar_checked_brush)
+            p.drawRoundedRect(barRect, rounding, rounding)
+
+            if self.isEnabled():
+                p.setBrush(self._handle_checked_brush)
+            else:
+                p.setBrush(self._handle_disabled_brush)
+
+            p.drawEllipse(QPointF(xPos, barRect.center().y()), handleRadius, handleRadius)
+
+        # Unchecked
+        else:
+            p.setBrush(self._bar_brush)
+            p.drawRoundedRect(barRect, rounding, rounding)
+            p.setPen(self._light_grey_pen)
+
+            if self.isEnabled():
+                p.setBrush(self._handle_brush)
+            else:
+                p.setBrush(self._handle_disabled_brush)
+            p.drawEllipse(QPointF(xPos, barRect.center().y()), handleRadius, handleRadius)
+
+        p.end()
+
+    @Slot(int)
+    def handle_state_change(self, value):
+        self._handle_position = 1 if value else 0
+
+    @Property(float)
+    def handle_position(self):
+        return self._handle_position
+
+    @handle_position.setter
+    def handle_position(self, pos):
+        &quot;&quot;&quot;change the property
+        we need to trigger QWidget.update() method, either by:
+            1- calling it here [ what we're doing ].
+            2- connecting the QPropertyAnimation.valueChanged() signal to it.
+        &quot;&quot;&quot;
+        self._handle_position = pos
+        self.update()
+
+    @Property(float)
+    def pulse_radius(self):
+        return self._pulse_radius
+
+    @pulse_radius.setter
+    def pulse_radius(self, pos):
+        self._pulse_radius = pos
+        self.update()
+
+
+
+class PAnimatedToggle(PToggle):
+
+    _transparent_pen = QPen(Qt.transparent)
+    _light_grey_pen = QPen(Qt.lightGray)
+
+    def __init__(self, *args, pulse_unchecked_color=&quot;#44999999&quot;,
+        pulse_checked_color=&quot;#4400B0EE&quot;, **kwargs):
+
+        self._pulse_radius = 0
+
+        super().__init__(*args, **kwargs)
+
+        self.animation = QPropertyAnimation(self, b&quot;handle_position&quot;, self)
+        self.animation.setEasingCurve(QEasingCurve.InOutCubic)
+        self.animation.setDuration(200)  # time in ms
+
+        self.pulse_anim = QPropertyAnimation(self, b&quot;pulse_radius&quot;, self)
+        self.pulse_anim.setDuration(350)  # time in ms
+        self.pulse_anim.setStartValue(10)
+        self.pulse_anim.setEndValue(20)
+
+        self.animations_group = QSequentialAnimationGroup()
+        self.animations_group.addAnimation(self.animation)
+        self.animations_group.addAnimation(self.pulse_anim)
+
+        self._pulse_unchecked_animation = QBrush(QColor(pulse_unchecked_color))
+        self._pulse_checked_animation = QBrush(QColor(pulse_checked_color))
+
+    @Slot(int)
+    def handle_state_change(self, value):
+        self.animations_group.stop()
+        if value:
+            self.animation.setEndValue(1)
+        else:
+            self.animation.setEndValue(0)
+        self.animations_group.start()
+
+    def paintEvent(self, e: QPaintEvent):
+
+        contRect = self.contentsRect()
+        handleRadius = round(0.24 * contRect.height())
+
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+
+        p.setPen(self._transparent_pen)
+        barRect = QRectF(
+            0, 0,
+            contRect.width() - handleRadius, 0.40 * contRect.height()
+        )
+        barRect.moveCenter(contRect.center())
+        rounding = barRect.height() / 2
+
+        # the handle will move along this line
+        trailLength = contRect.width() - 2 * handleRadius
+
+        xPos = contRect.x() + handleRadius + trailLength * self._handle_position
+
+        # Animate, unless partially checked
+        if self.checkState() in [Qt.Checked, Qt.Unchecked]:
+            if self.pulse_anim.state() == QPropertyAnimation.Running:
+                p.setBrush(
+                    self._pulse_checked_animation if
+                    self.isChecked() else self._pulse_unchecked_animation)
+                p.drawEllipse(QPointF(xPos, barRect.center().y()), self._pulse_radius, self._pulse_radius)
+
+        if self.checkState() == Qt.PartiallyChecked:
+            p.setBrush(self._bar_partially_checked_brush)
+            p.drawRoundedRect(barRect, rounding, rounding)
+            # Don't draw the handle if partially checked!
+
+        elif self.checkState() == Qt.Checked:
+            p.setBrush(self._bar_checked_brush)
+            p.drawRoundedRect(barRect, rounding, rounding)
+
+            if self.isEnabled():
+                p.setBrush(self._handle_checked_brush)
+            else:
+                p.setBrush(self._handle_disabled_brush)
+
+            p.drawEllipse(QPointF(xPos, barRect.center().y()),handleRadius, handleRadius)
+
+        else:
+            p.setBrush(self._bar_brush)
+            p.drawRoundedRect(barRect, rounding, rounding)
+            p.setPen(self._light_grey_pen)
+
+            if self.isEnabled():
+                p.setBrush(self._handle_brush)
+            else:
+                p.setBrush(self._handle_disabled_brush)
+
+            p.drawEllipse(QPointF(xPos, barRect.center().y()),handleRadius, handleRadius)
+
+        p.end()
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="User Manual"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../about/" class="btn btn-neutral float-right" title="About">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../about/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
