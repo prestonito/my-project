@@ -125,6 +125,10 @@
                 </li>
               </ul>
               <ul>
+                <li class="toctree-l1"><a class="" href="https://www2.keck.hawaii.edu/software/kPyQt/">kPyQt Info</a>
+                </li>
+              </ul>
+              <ul>
                 <li class="toctree-l1"><a class="reference internal" href="../about/">About</a>
                 </li>
               </ul>
@@ -151,7 +155,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h2 id="code-documentation-new">Code Documentation New</h2>
+                <h2 id="code-documentation">Code Documentation</h2>
 <hr />
 <h3 id="details-directory-imports-etc">Details (directory, imports, etc.)</h3>
 <h4 id="codeui-file-directory"><em>Code/.ui file directory</em></h4>
@@ -330,7 +334,7 @@ def showDialog(text, yes=False, cancel=False):
         self.secondsToMove = 0
 </code></pre>
 <h4 id="actions"><em>Actions</em></h4>
-<p>Connects buttons/text fields/radio buttons to their respective functions. For the input boxes, set a boolean attribute to ensure background color change only when user is editing (and not when it gets signals from the channel).</p>
+<p>Connects buttons/text fields/radio buttons to their respective functions. For the input boxes, set a boolean attribute to ensure background color change only when user is editing (and not when it gets signals from the channel). The input validator code can be found on the left sidebar under 'Input Verification and Writing' or by clicking <a href="./#validators">here.</a></p>
 <pre><code class="language-python"># Actions! Connects buttons/text fields to functions
         self.selectFileButton.clicked.connect(self.fileSelection)
         self.reconstructorButton.clicked.connect(self.reconstructorSelection)
@@ -357,7 +361,7 @@ def showDialog(text, yes=False, cancel=False):
         self.altBox.textChanged.connect(lambda: self.editTextChanged(self.altBox))
 </code></pre>
 <h4 id="channels"><em>Channels</em></h4>
-<p>Connects to the different channels. The different types are RBV (read back value), VAL (position value), VELO (velocity), ACCL (acceleration), MOVN (returns moving status), SPMG (returns one of these values: Stop, Pause, Move, Go). Note: Writing a position value must be done to the .VAL, while reading back it's position is done through .RBV.</p>
+<p>Connects to the different channels using kPyQt. kPyQt documentation can be found here on <a href="https://www2.keck.hawaii.edu/software/kPyQt/">Keck's website.</a> The different types are RBV (read back value), VAL (position value), VELO (velocity), ACCL (acceleration), MOVN (returns moving status), SPMG (returns one of these values: Stop, Pause, Move, Go). Writing a position value must be done to the .VAL, while reading back it's position is done through .RBV. <em>Note: These channels are to connect to the emulator, and will need to be replaced once the real stages get setup.</em></p>
 <pre><code class="language-python"># Channel creation for the emulator
         self.posChan = kPyQt.caFactory(&quot;wndsim:ln:m1.RBV&quot;, kPyQt.Channel.caFloat)
         self.posWritingChan = kPyQt.caFactory(&quot;wndsim:ln:m1.VAL&quot;, kPyQt.Channel.caFloat)
@@ -664,7 +668,7 @@ def showDialog(text, yes=False, cancel=False):
             edit.setStyleSheet(self.editStyleSheet)
 </code></pre>
 <h4 id="blocking-signals"><em>Blocking signals</em></h4>
-<p>These functions use the attribute 'changed' (that was created in the Setup UI section) to prevent changing the color to red if it's receiving signals from the emulator. That way, it'll only change to red if the user is inputting changes.</p>
+<p>These functions use the attribute 'changed' (that was created in the Setup UI section) to prevent changing the color to red if it's receiving signals from the stage. That way, it'll only change to red if the user is inputting changes.</p>
 <pre><code class="language-python">ef posBoxSetText(self, val):
         if not self.posBox.changed:
             self.posBox.setStyleSheet(&quot;&quot;)
