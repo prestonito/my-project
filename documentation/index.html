@@ -69,6 +69,8 @@
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#channels">Channels</a>
     </li>
+    <li class="toctree-l3"><a class="reference internal" href="#ao-keywords">AO Keywords</a>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#toggle-visual">Toggle Visual</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#state-machine-support">State machine support</a>
@@ -79,6 +81,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#state-machine">State Machine</a>
         <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#state-init">State: INIT</a>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#state-off">State: OFF</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#state-on">State: ON</a>
@@ -105,7 +109,7 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#edittextchanged-and-editfinished">editTextChanged and editFinished</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#blocking-signals">Blocking signals</a>
+    <li class="toctree-l3"><a class="reference internal" href="#receiving-signals-from-stage">Receiving signals from stage</a>
     </li>
         </ul>
     </li>
@@ -116,6 +120,8 @@
     <li class="toctree-l3"><a class="reference internal" href="#writing-to-channel">Writing to channel</a>
     </li>
         </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#loop-control">Loop Control</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#main-function">Main function</a>
     </li>
@@ -176,14 +182,14 @@
 # kpython safely sets RELDIR, KROOT, LROOT, and PYTHONPATH before invoking
 # the actual Python interpreter.
 
-# Setup an EPICS address list if one is not already defined
-
 import os
-import subprocess
-import datetime
-import time
 
-addrs = 'localhost:5064 vm-k1epicsgateway:5064 vm-k2epicsgateway:5064 k1aoserver-new:8607 localhost:5555 localhost:5556'
+# Setup an EPICS address list if one is not already defined
+addrs = 'localhost:5064 vm-k1epicsgateway:5064 vm-k2epicsgateway:5064 k1aoserver-new:8607 localhost:5555 localhost:5556 k1aoserver-new:5064'
+
+
+
+# addrs = 'localhost:5064 vm-k1epicsgateway:5064 vm-k2epicsgateway:5064 k1aoserver-new:5064 localhost:5555 localhost:5556'
 
 print(f'Overriding EPICS address list to: {addrs}')
 os.environ['EPICS_CA_ADDR_LIST'] = addrs
@@ -196,7 +202,6 @@ import kPyQt  # provided by kroot/kui/kPyQt
 import logging, coloredlogs
 import argparse
 import sys
-import datetime
 import base64
 from dateutil.parser import isoparse
 import requests
@@ -204,6 +209,9 @@ import io
 from enum import Enum, auto
 import urllib
 import functools
+import subprocess
+import time
+import math
 
 from PyQt5 import QtCore, QtWidgets, uic
 from PyQt5.QtWidgets import QStatusBar, QMessageBox, QWidget, QVBoxLayout, QLabel, QPushButton, \
@@ -214,8 +222,6 @@ from PyQt5.Qt import QApplication
 
 from PToggle import PToggle, PAnimatedToggle
 
-from datetime import datetime
-
 </code></pre>
 <h4 id="constants-showdialog-function-and-state-machine-class"><em>Constants, showDialog function, and state machine class</em></h4>
 <p>These are all of the constants used throughout the code. A showDialog function is included to be called whenever QMessageBoxes are used. The code was structured using state machines.</p>
@@ -225,23 +231,32 @@ debug = False
 SECONDS = 1
 UNBINNED_MODE = 2000
 BINNED_MODE = 3600
-FONTBOLD = 'Montserrat SemiBold'
-FONTLIGHT = 'Montserrat Light'
-STATUSBAR_WHITE_STYLE = 'QStatusBar{padding-left:8px;background:white;color:black;font-weight:bold;}'
-STATUSBAR_YELLOW_STYLE = 'QStatusBar{padding-left:8px;background:yellow;color:black;font-weight:bold;}'
-EDIT_STYLE = 'font: 25 14pt &quot;Montserrat SemiBold&quot;;'
-MODE_CLEAR_STYLE = 'background-color: rgb(255, 255, 255);'
-MODE_SET_STYLE = 'background-color: rgb(0, 170, 0);'
-MODE_UNSET_STYLE = 'background-color: rgb(170, 170, 170);'
-
+WIND_POS_HOME = 0.00
+VEL_HOME = 2.00
+ACCEL_HOME = 0.10
+ALT_POS_HOME = 5.0
+STOP = &quot;0&quot;
+MOVE = &quot;3&quot;
+WIND_POS_MIN = -40.00
+WIND_POS_MAX = 40.00
+VEL_MIN = 2.00
+VEL_MAX = 80.00
+ACCEL_MIN = 0.00
+ACCEL_MAX = 10.00
+ALT_MIN = 5.0
+ALT_MAX = 12.0
+GAIN_MIN = 0
+GAIN_MAX = 1
+FRAMERATE_MIN = 1
+TIMEOUT_MS = 45000
 STATUS_RED_STYLE = 'background-color: rgb(255, 0, 0);'
-STATUS_GREEN_STYLE = 'background-color: rgb(0, 255, 0);'
+# STATUS_GREEN_STYLE = 'background-color: rgb(0, 255, 0);'
 MESSAGE_LIMIT = 100
 
 
 class TelSimStates(Enum):
-    OFF = 0
-    ON = auto()
+    INIT = 0
+    OFF = auto()
     IDLE = auto()
     MOVE_ALT = auto()
     AWAIT_ALT = auto()
@@ -259,7 +274,7 @@ def showDialog(text, yes=False, cancel=False):
     :param text: The message to be displayed.
     :param yes: Use &quot;Yes/No&quot; instead of &quot;OK/Cancel&quot;
     :param cancel: Show a Cancel button, versus just OK.
-    :return: Nothing.
+    :return: True if 'Ok' or 'Yes' is pressed, False if not.
     '''
 
     # Create a message box
@@ -284,7 +299,8 @@ def showDialog(text, yes=False, cancel=False):
         return False
 </code></pre>
 <h4 id="the-initializer-function"><em>The initializer function</em></h4>
-<pre><code class="language-python">def __init__(self, *args, **kwargs):
+<pre><code class="language-python"># -----------------------------------------------------------------------------
+    def __init__(self, *args, **kwargs):
 
         # self.list = None
         self.popups = {}
@@ -296,12 +312,12 @@ def showDialog(text, yes=False, cancel=False):
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
 
         # Load the UI file
-        uifile = 'dummy.ui'
+        uifile = 'telsim.ui'
         path = '.'
         filename = os.path.join(path, uifile)
 
         if not os.path.exists(filename):
-            filename = os.path.join(os.environ['KROOT'], 'rel/uno/default/data', uifile)
+            filename = os.path.join(os.environ['KROOT'], 'rel/ao/default/data', uifile)
 
         uic.loadUi(filename, self)
 </code></pre>
@@ -322,7 +338,8 @@ def showDialog(text, yes=False, cancel=False):
         self.menubar.setNativeMenuBar(False)
 
         # Enabling/disabling feature when TelSIM button pressed
-        self.controls = [self.windTSBox, self.TSBox, self.altGroupBox, self.wavefrontGroupBox, self.fileGroupBox, self.loopocBox, self.loopControlLabel]
+        self.controls = [self.windTSBox, self.TSBox, self.altGroupBox, self.wavefrontGroupBox, self.fileGroupBox,
+                         self.loopocBox, self.loopControlLabel]
 
 </code></pre>
 <h4 id="timers"><em>Timers</em></h4>
@@ -335,11 +352,11 @@ def showDialog(text, yes=False, cancel=False):
 </code></pre>
 <h4 id="actions"><em>Actions</em></h4>
 <p>Connects buttons/text fields/radio buttons to their respective functions. For the input boxes, set a boolean attribute to ensure background color change only when user is editing (and not when it gets signals from the channel). The input validator code can be found on the left sidebar under 'Input Verification and Writing' or by clicking <a href="./#validators">here.</a></p>
-<pre><code class="language-python"># Actions! Connects buttons/text fields to functions
+<pre><code class="language-python">        # Actions! Connects buttons/text fields to functions
         self.selectFileButton.clicked.connect(self.fileSelection)
         self.reconstructorButton.clicked.connect(self.reconstructorSelection)
-        self.gainInput.editingFinished.connect(lambda: self.gainCheck(self.gainInput.text()))
-        self.frameRateInput.editingFinished.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+        self.openLoop.clicked.connect(self.openLoopButton_clicked)
+        self.closedLoop.clicked.connect(self.closeLoopButton_clicked)
         self.bin.toggled.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
         self.unbin.toggled.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
 
@@ -359,12 +376,21 @@ def showDialog(text, yes=False, cancel=False):
         setattr(self.altBox, 'changed', False)
         self.altBox.editingFinished.connect(lambda: self.altCheck(self.altBox.text()))
         self.altBox.textChanged.connect(lambda: self.editTextChanged(self.altBox))
+
+        setattr(self.gainInput, 'changed', False)
+        self.gainInput.editingFinished.connect(lambda: self.gainCheck(self.gainInput.text()))
+        self.gainInput.textChanged.connect(lambda: self.editTextChanged(self.gainInput))
+
+        setattr(self.frameRateInput, 'changed', False)
+        self.frameRateInput.editingFinished.connect(lambda: self.frameRateCheck(self.frameRateInput.text()))
+        self.frameRateInput.textChanged.connect(lambda: self.editTextChanged(self.frameRateInput))
 </code></pre>
 <h4 id="channels"><em>Channels</em></h4>
 <p>Connects to the different channels using kPyQt. kPyQt documentation can be found here on <a href="https://www2.keck.hawaii.edu/software/kPyQt/">Keck's website.</a> The different types are RBV (read back value), VAL (position value), VELO (velocity), ACCL (acceleration), MOVN (returns moving status), SPMG (returns one of these values: Stop, Pause, Move, Go). Writing a position value must be done to the .VAL, while reading back it's position is done through .RBV. <em>Note: These channels are to connect to the emulator, and will need to be replaced once the real stages get setup.</em></p>
-<pre><code class="language-python"># Channel creation for the emulator
+<pre><code class="language-python">        # Channel creation for the emulator
         self.posChan = kPyQt.caFactory(&quot;wndsim:ln:m1.RBV&quot;, kPyQt.Channel.caFloat)
         self.posWritingChan = kPyQt.caFactory(&quot;wndsim:ln:m1.VAL&quot;, kPyQt.Channel.caFloat)
+        self.posMovingChan = kPyQt.caFactory(&quot;wndsim:ln:m1.MOVN&quot;, kPyQt.Channel.caFloat)
         self.velChan = kPyQt.caFactory(&quot;wndsim:ln:m1.VELO&quot;, kPyQt.Channel.caFloat)
         self.accelChan = kPyQt.caFactory(&quot;wndsim:ln:m1.ACCL&quot;, kPyQt.Channel.caFloat)
         self.altChan = kPyQt.caFactory(&quot;altsim:ln:m1.RBV&quot;, kPyQt.Channel.caFloat)
@@ -373,6 +399,24 @@ def showDialog(text, yes=False, cancel=False):
         self.windStopChan = kPyQt.caFactory(&quot;wndsim:ln:m1.SPMG&quot;, kPyQt.Channel.caFloat)
         self.altStopChan = kPyQt.caFactory(&quot;altsim:ln:m1.SPMG&quot;, kPyQt.Channel.caFloat)
 
+</code></pre>
+<h4 id="ao-keywords"><em>AO Keywords</em></h4>
+<p>These are the keywords for the AO wavefront sensor and loop control. Callbacks are intialized during the <a href="./#state-init">INIT state.</a> <em>Note: These keywords might have to be changed once the AO system is configured for the new RTC.</em></p>
+<pre><code class="language-python">        service = 'ao1'
+        ao1 = ktl.cache(service)
+        # -----------------------------------------------------------------------------------------
+        # A label attached to an KTL string keyword
+        dt_key = 'dtlp'
+        self.dt_keyword = kPyQt.kFactory(ao1[dt_key])
+
+        dm_key = 'dmlp'
+        self.dm_keyword = kPyQt.kFactory(ao1[dm_key])
+
+        fr_key = 'wsfrrt'  # Alternate keyword for frame rate for now (framerate keyword is not configured for the new RTC). Actual keyword is o1fps
+        self.frameRate_keyword = kPyQt.kFactory(ao1[fr_key])
+
+        # gain_key = 'dtgain'  # Fake keyword for gain for now (gain keyword is not configured for the new RTC). Actual keyword is o1wgs
+        self.gain_keyword = kPyQt.caFactory('k1:ao:wc:dt:sv:gain', kPyQt.Channel.caFloat)
 </code></pre>
 <h4 id="toggle-visual"><em>Toggle Visual</em></h4>
 <p><em>Note: PToggle is a separate python file that was imported at the top of the code. The toggle code can be found <a href="./#toggle-code">here.</a></em> Below is the section that implements PToggle to create a toggle button for the two translation stage's connection status.</p>
@@ -399,13 +443,12 @@ def showDialog(text, yes=False, cancel=False):
         self.startButton.clicked.connect(self.startButtonPressed)
         self.stopButtonWasPressed = False
         self.stopButton.clicked.connect(self.stopButtonPressed)
-
-
-        self.state = TelSimStates.OFF
+        self.stateTimeout = QTimer()
+        self.stateTimeout.setSingleShot(True)
         self.stateMachineTimer = QTimer()
         self.stateMachineTimer.timeout.connect(self.stateMachine)
         self.stateMachineTimer.start(75)
-
+        self.state = TelSimStates.INIT
 </code></pre>
 <h4 id="functions-to-trigger-states"><em>Functions to trigger states</em></h4>
 <p>Creation of the actual functions connected to the buttons (start, stop, setupTelSIM, closeTelSIM).</p>
@@ -453,10 +496,39 @@ def showDialog(text, yes=False, cancel=False):
         &quot;&quot;&quot;
         self.statusbar.showMessage(f'STATE: {self.state.name}')
 </code></pre>
+<h4 id="state-init"><em>State: INIT</em></h4>
+<p>The INIT state runs all the callbacks to the channels and keywords. Having a separate state that does this ensures that the callbacks only happen once when the program is first opened.</p>
+<pre><code class="language-python">        # ----- STATE 0 ------------------------------------------------
+        if self.state == TelSimStates.INIT:
+            # Connects to the channels to read and display the values
+            self.posChan.floatCallback.connect(self.posBoxSetText)
+            self.posChan.runCallbacks()
+            self.velChan.floatCallback.connect(self.velBoxSetText)
+            self.velChan.runCallbacks()
+            self.accelChan.floatCallback.connect(self.accelBoxSetText)
+            self.accelChan.runCallbacks()
+            self.altChan.floatCallback.connect(self.altBoxSetText)
+            self.altChan.runCallbacks()
+
+            self.dt_keyword.stringCallback.connect(self.loopController)
+            self.dt_keyword.primeCallback()
+
+            self.dm_keyword.stringCallback.connect(self.loopController)
+            self.dm_keyword.primeCallback()
+
+            self.frameRate_keyword.stringCallback.connect(self.frBoxSetText)
+            self.frameRate_keyword.primeCallback()
+
+            self.gain_keyword.floatCallback.connect(self.gainBoxSetText)
+            self.gain_keyword.runCallbacks()
+
+            self.state = TelSimStates.OFF
+            return  
+</code></pre>
 <h4 id="state-off"><em>State: OFF</em></h4>
 <p>The OFF state has everything disabled except for the setupTelSIM button. Transitions to ON state if setupTelSIM button was pressed.</p>
-<pre><code class="language-python"># ----- STATE 0 ------------------------------------------------
-        if self.state == TelSimStates.OFF:
+<pre><code class="language-python">        # ----- STATE 1 ------------------------------------------------
+        elif self.state == TelSimStates.OFF:
 
             # Update GUI widgets for the OFF state
             self.startButton.setVisible(True)
@@ -477,35 +549,18 @@ def showDialog(text, yes=False, cancel=False):
                 self.setupTelSIMButtonWasPressed = False
 
                 # Advance the state machine
-                self.state = TelSimStates.ON
+                self.state = TelSimStates.IDLE
                 return
 
             return
 </code></pre>
 <h4 id="state-on"><em>State: ON</em></h4>
 <p>The ON state connects the callbacks to start displaying the constant refreshing of the pos/vel/accel/alt values. <em>Note: This had to be separated from the IDLE state because .runCallbacks() only needed to be called once upon starting up. Otherwise, the input boxes would always refresh and make it difficult for the user to edit.</em></p>
-<pre><code class="language-python"># ----- STATE 1 ---------------------------------------------
-        elif self.state == TelSimStates.ON:
-
-            # Connects to the channels to read and display the values
-            self.posChan.floatCallback.connect(self.posBoxSetText)
-            self.posChan.runCallbacks()
-            self.velChan.floatCallback.connect(self.velBoxSetText)
-            self.velChan.runCallbacks()
-            self.accelChan.floatCallback.connect(self.accelBoxSetText)
-            self.accelChan.runCallbacks()
-            self.altChan.floatCallback.connect(self.altBoxSetText)
-            self.altChan.runCallbacks()
-
-            self.state = TelSimStates.IDLE
-            return
-</code></pre>
-<h4 id="state-idle"><em>State: IDLE</em></h4>
-<p>The IDLE state enables all of the input widgets and waits for the user to hit the Start button or the closeTelSIM button and changes the state accordingly.</p>
-<pre><code class="language-python"> # ----- STATE 2 -----------------------------------------
+<pre><code class="language-python">        # ----- STATE 2 -----------------------------------------
         elif self.state == TelSimStates.IDLE:
 
-            # Update GUI widgets for the ON state
+            # Update GUI widgets visibility
+            self.startstopBox.setEnabled(True)
             self.startButton.setVisible(True)
             self.startButton.setEnabled(True)
             self.stopButton.setVisible(False)
@@ -531,9 +586,38 @@ def showDialog(text, yes=False, cancel=False):
 
             return
 </code></pre>
+<h4 id="state-idle"><em>State: IDLE</em></h4>
+<p>The IDLE state enables all of the input widgets and waits for the user to hit the Start button or the closeTelSIM button and changes the state accordingly.</p>
+<pre><code class="language-python">        # ----- STATE 3 -----------------------------------------
+        elif self.state == TelSimStates.MOVE_ALT:
+            self.finalPos = self.posBox.text()
+            self.finalAlt = self.altBox.text()
+
+            self.initialPos = float(self.posChan.read())
+            self.secondsToMove = abs(float(self.initialPos) - float(self.finalPos)) / float(
+                self.velBox.text())  # Note: self.velBox.text() is only assigned after being validated
+            self.LCDnumbers.display(f&quot;{self.secondsToMove:0.2f}&quot;)
+            self.initialAlt = float(self.altChan.read())
+            if showDialog(&quot;Are you sure you want to START?&quot;, yes=True, cancel=True):
+                for i in self.controls:
+                    i.setEnabled(False)  # Disable the widgets
+                self.startButton.setVisible(False)
+                self.startButton.setEnabled(False)
+                self.stopButton.setVisible(True)
+                self.stopButton.setEnabled(True)
+                self.altStopChan.write(MOVE)
+                self.altWrite(self.altBox.text())
+                self.altBox.changed = False
+                self.stateTimeout.start(TIMEOUT_MS)
+                self.state = TelSimStates.AWAIT_ALT
+                return
+            else:
+                self.state = TelSimStates.IDLE
+                return
+</code></pre>
 <h4 id="state-move_alt"><em>State: MOVE_ALT</em></h4>
 <p>The MOVE_ALT state does a rough calculation of amount of time to move the wind TS (the timer is only used for the wind TS, not the alt TS. The timer and the wind TS doesn't actually start running until the alt TS has finished moving) and stores that in <em>self.secondsToMove</em>. It also uses the showDialog function (shown in the Details section) to ask the user to verify the start. Once verified, it will write '3' to the .SPMG channel (3 is equal to 'MOVE', in case it's currently stopped) before writing the value in the altbox to the .VAL channel. Transition to the AWAIT_ALT state is automatic once these values have been written.</p>
-<pre><code class="language-python"># ----- STATE 3 -----------------------------------------
+<pre><code class="language-python">        # ----- STATE 3 -----------------------------------------
         elif self.state == TelSimStates.MOVE_ALT:
 
             self.finalPos = self.posBox.text()
@@ -564,67 +648,75 @@ def showDialog(text, yes=False, cancel=False):
 </code></pre>
 <h4 id="state-await_alt"><em>State: AWAIT_ALT</em></h4>
 <p>Waits for the alt TS to get to its destination. Once it reaches its destination, transitions to the MOVE_WIND state. If Stop button was pressed, transitions to STOPPED state.</p>
-<pre><code class="language-python"># STATE 3
+<pre><code class="language-python">        # ----- STATE 4 -----------------------------------------
         elif self.state == TelSimStates.AWAIT_ALT:
-            # use less than or equal to instead of ==
-            x = float(self.altChan.read())
-            y = float(self.finalAlt)
-            if x == y:
+            if math.isclose(float(self.altChan.read()), float(self.finalAlt), abs_tol=0.05):
+                self.stateTimeout.stop()
+                self.stateTimeout.start(TIMEOUT_MS)
                 self.state = TelSimStates.MOVE_WIND
                 return
             if self.stopButtonWasPressed:
+                self.stateTimeout.stop()
                 self.stopButtonWasPressed = False
                 self.state = TelSimStates.STOPPED
+                return
+
+            if not self.stateTimeout.isActive():
+                raise TimeoutError(&quot;Alt TS took more than 45 seconds to move&quot;)
                 return
             return
 </code></pre>
 <h4 id="state-move_wind"><em>State: MOVE_WIND</em></h4>
 <p>Acts similarly to the MOVE_ALT state. Also starts the timer with the <em>self.secondsToMove</em> value calculated in the MOVE_ALT state. Transitions to AWAIT_WIND state automatically. </p>
-<pre><code class="language-python"># STATE 4
-       elif self.state == TelSimStates.MOVE_WIND:
-            print(&quot;move wind&quot;)
+<pre><code class="language-python">        # ----- STATE 5 -----------------------------------------
+        elif self.state == TelSimStates.MOVE_WIND:
             self.posBox.changed = False
             self.velBox.changed = False
             self.accelBox.changed = False
-            self.windStopChan.write(&quot;3&quot;)
+            self.windStopChan.write(MOVE)
             self.accelWrite(self.accelBox.text())
             self.velWrite(self.velBox.text())
             self.posWrite(self.posBox.text())
-
             self.countdownTimer.start(int(self.secondsToMove) * 1000)
+            self.stateTimeout.start(TIMEOUT_MS)
             self.state = TelSimStates.AWAIT_WIND
             return
 </code></pre>
 <h4 id="state-await_wind"><em>State: AWAIT_WIND</em></h4>
 <p>Acts similarly to the AWAIT_ALT state. Once the wind TS reaches its destination, transitions to the IDLE state. </p>
-<pre><code class="language-python"># STATE 5
+<pre><code class="language-python">        # ----- STATE 6 -----------------------------------------
         elif self.state == TelSimStates.AWAIT_WIND:
             self.timeLeft = self.countdownTimer.remainingTime() / 1000
             self.LCDnumbers.display(f&quot;{self.timeLeft:0.2f}&quot;)
-            if round(float(self.posChan.read())) == round(float(self.finalPos)):
+            if math.isclose(float(self.posChan.read()), float(self.finalPos), abs_tol=0.05):
+                self.stateTimeout.stop()
                 self.state = TelSimStates.IDLE
                 return
             if self.stopButtonWasPressed:
                 self.stopButtonWasPressed = False
+                self.stateTimeout.stop()
                 self.state = TelSimStates.STOPPED
                 return
+            if not self.stateTimeout.isActive():
+                raise TimeoutError(&quot;Wind TS took more than 45 seconds to move&quot;)
+                return
+
             return
 </code></pre>
 <h4 id="state-stopped"><em>State: STOPPED</em></h4>
 <p>Writes '0' to the two .SPMG channels ('0' is equal to 'Stop') and stops the timer. Automatically transitions to IDLE state.</p>
-<pre><code class="language-python"> # STATE 6
+<pre><code class="language-python">        # ----- STATE 7 -----------------------------------------
         elif self.state == TelSimStates.STOPPED:
-            self.windStopChan.write(&quot;0&quot;)
-            self.altStopChan.write(&quot;0&quot;)
+            self.windStopChan.write(STOP)
+            self.altStopChan.write(STOP)
             self.countdownTimer.stop()
             self.state = TelSimStates.IDLE
             return
 </code></pre>
 <h4 id="state-cleanup"><em>State: CLEANUP</em></h4>
 <p>Enables/disables widgets accordingly. Sends the two TS to their 'home' position. Automatically transitions to AWAIT_CLEANUP state.</p>
-<pre><code class="language-python"># STATE 7
+<pre><code class="language-python">        # ----- STATE 8 -----------------------------------------
         elif self.state == TelSimStates.CLEANUP:
-            print(&quot;cleaning!&quot;)
             self.closeTelSIMButton.setVisible(False)
             self.closeTelSIMButton.setEnabled(False)
             self.setupTelSIMButton.setVisible(True)
@@ -632,24 +724,32 @@ def showDialog(text, yes=False, cancel=False):
             self.startstopBox.setEnabled(False)
             for i in self.controls:
                 i.setEnabled(False)
-            self.posWrite(0.00)
-            self.velWrite(2.00)
-            self.accelWrite(0.10)
-            self.altWrite(5.0)
+            self.windStopChan.write(MOVE)
+            self.altStopChan.write(MOVE)
+            self.posWrite(WIND_POS_HOME)
+            self.velWrite(VEL_HOME)
+            self.accelWrite(ACCEL_HOME)
+            self.altWrite(ALT_POS_HOME)
+            time.sleep(2)
+            self.stateTimeout.start(TIMEOUT_MS)
             self.state = TelSimStates.AWAIT_CLEANUP
             return
 </code></pre>
 <h4 id="state-await_cleanup"><em>State: AWAIT_CLEANUP</em></h4>
 <p>Waits for the two TS to get to their 'home' position before transitioning to OFF state.</p>
-<pre><code class="language-python"># STATE 8
+<pre><code class="language-python">        # ----- STATE 9 -----------------------------------------
         elif self.state == TelSimStates.AWAIT_CLEANUP:
-            if float(self.windStopChan.read()) &gt;= 0.0:
-                if float(self.altStopChan.read()) &gt;= 0.0:
-                    if float(self.accelChan.read()) &gt;= 0.1:
-                        if float(self.velChan.read()) &gt;= 2.0:
+            if int(self.altMovingChan.read()) == 0:
+                if int(self.posMovingChan.read()) == 0:
+                    if math.isclose(float(self.accelChan.read()), 0.2, abs_tol=0.2):
+                        if math.isclose(float(self.velChan.read()), 2.1, abs_tol=0.2):
                             self.state = TelSimStates.OFF
                             return
-            return
+
+            if not self.stateTimeout.isActive():
+                raise TimeoutError(&quot;Cleanup took more than 45 seconds&quot;)
+                return
+            return  
 </code></pre>
 <h3 id="color-changing">Color changing</h3>
 <h4 id="edittextchanged-and-editfinished"><em>editTextChanged and editFinished</em></h4>
@@ -667,9 +767,9 @@ def showDialog(text, yes=False, cancel=False):
             edit.changed = False
             edit.setStyleSheet(self.editStyleSheet)
 </code></pre>
-<h4 id="blocking-signals"><em>Blocking signals</em></h4>
+<h4 id="receiving-signals-from-stage"><em>Receiving signals from stage</em></h4>
 <p>These functions use the attribute 'changed' (that was created in the Setup UI section) to prevent changing the color to red if it's receiving signals from the stage. That way, it'll only change to red if the user is inputting changes.</p>
-<pre><code class="language-python">ef posBoxSetText(self, val):
+<pre><code class="language-python">    def posBoxSetText(self, val):
         if not self.posBox.changed:
             self.posBox.setStyleSheet(&quot;&quot;)
             self.posBox.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
@@ -696,6 +796,20 @@ def showDialog(text, yes=False, cancel=False):
             self.altBox.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
             self.altBox.setText(f&quot;{val:0.1f}&quot;)
             self.altBox.blockSignals(False)  # Turn on signals to the edit, a human is not editing it!
+
+    def frBoxSetText(self, val):
+        if not self.frameRateInput.changed:
+            self.frameRateInput.setStyleSheet(&quot;&quot;)
+            self.frameRateInput.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
+            self.frameRateInput.setText(f&quot;{val}&quot;)
+            self.frameRateInput.blockSignals(False)  # Turn on signals to the edit, a human is not editing it!
+
+    def gainBoxSetText(self, val):
+        if not self.gainInput.changed:
+            self.gainInput.setStyleSheet(&quot;&quot;)
+            self.gainInput.blockSignals(True)  # Turn off signals to the edit, a human is not editing it!
+            self.gainInput.setText(f&quot;{val:0.2f}&quot;)
+            self.gainInput.blockSignals(False)  # Turn on signals to the edit, a human is not editing it!
 </code></pre>
 <h3 id="input-verification-and-writing">Input Verification and Writing</h3>
 <h4 id="validators"><em>Validators</em></h4>
@@ -705,57 +819,57 @@ def showDialog(text, yes=False, cancel=False):
         '''
         Makes sure the value entered in the field is within bounds. If not, will show error message. Also assigns
         self.finalPos used later for calculating time it will take to move
-
         :param msg: Value entered in posBox text box
-        :return:
         '''
-        self.posBox.validator = QDoubleValidator(-40.00, 40.00, 2, notation=QDoubleValidator.StandardNotation)
-        if QDoubleValidator.validate(self.posBox.validator, str(msg), 0)[0] != 2:
+        self.posBox.validator = QDoubleValidator(WIND_POS_MIN, WIND_POS_MAX, 2,
+                                                 notation=QDoubleValidator.StandardNotation)
+        if QDoubleValidator.validate(self.posBox.validator, str(msg), 0)[
+            0] != 2:  # When this object is != 2, that means that it's not an acceptable input
             self.posBox.setText(f&quot;{float(self.posChan.read()):0.2f}&quot;)
             showDialog(&quot;Position must be a float between -40.00 and 40.00&quot;)
-        # else:
-        #     self.finalPos = msg
 
     def velCheck(self, msg):
-        self.velBox.validator = QDoubleValidator(2.00, 80.00, 2, notation=QDoubleValidator.StandardNotation)
+        self.velBox.validator = QDoubleValidator(VEL_MIN, VEL_MAX, 2, notation=QDoubleValidator.StandardNotation)
         if QDoubleValidator.validate(self.velBox.validator, str(msg), 0)[0] != 2:
             self.velBox.setText(f&quot;{float(self.velChan.read()):0.2f}&quot;)
             showDialog(&quot;Velocity must be a float between 2.00 and 80.00&quot;)
         else:
+            # Ensures self.velVal assignment ONLY if the input passes the validator
             self.velVal = msg
 
     def accelCheck(self, msg):
-        self.accelBox.validator = QDoubleValidator(0.00, 10.00, 2, notation=QDoubleValidator.StandardNotation)
+        self.accelBox.validator = QDoubleValidator(ACCEL_MIN, ACCEL_MAX, 2, notation=QDoubleValidator.StandardNotation)
         if QDoubleValidator.validate(self.accelBox.validator, str(msg), 0)[0] != 2:
             self.accelBox.setText(f&quot;{float(self.accelChan.read()):0.2f}&quot;)
             showDialog(&quot;Acceleration must be a float between 0.00 and 10.00&quot;)
 
     def gainCheck(self, msg):
-        if msg != '':  # DELETE THIS LINE ONCE ACTUALLY CONNECTED
-            self.gainInput.validator = QIntValidator(1, 600, self)
-            if QIntValidator.validate(self.gainInput.validator, str(msg), 0)[0] != 2:
-                self.gainInput.setText(&quot;1&quot;)
-                showDialog(&quot;Gain must be an integer between 1 and 600; automatically reset gain to 1&quot;)
+        self.gainInput.validator = QDoubleValidator(GAIN_MIN, GAIN_MAX, 2, notation=QDoubleValidator.StandardNotation)
+        if QDoubleValidator.validate(self.gainInput.validator, str(msg), 0)[0] != 2:
+            self.gainInput.setText(f&quot;{float(self.gain_keyword.read()):0.2f}&quot;)
+            showDialog(&quot;Gain must be between 0 and 1&quot;)
+        else:
+            self.gain_keyword.write(msg)
+        self.gainInput.changed = False
 
     def altCheck(self, msg):
-        if msg != '':  # DELETE THIS LINE ONCE ACTUALLY CONNECTED
-            self.altBox.validator = QDoubleValidator(5.0, 12.0, 1, notation=QDoubleValidator.StandardNotation)
-            if QDoubleValidator.validate(self.altBox.validator, str(msg), 0)[0] != 2:
-                self.altBox.setText(f&quot;{float(self.altChan.read()):0.1f}&quot;)
-                showDialog(&quot;Altitude must be between 5.0 and 12.0; automatically reset altitude to 5.0&quot;)
-            # else:
-            #     self.finalAlt = msg
+        self.altBox.validator = QDoubleValidator(ALT_MIN, ALT_MAX, 1, notation=QDoubleValidator.StandardNotation)
+        if QDoubleValidator.validate(self.altBox.validator, str(msg), 0)[0] != 2:
+            self.altBox.setText(f&quot;{float(self.altChan.read()):0.1f}&quot;)
+            showDialog(&quot;Altitude must be between 5.0 and 12.0&quot;)
 
     def frameRateCheck(self, msg):
-        if msg != '':  # DELETE THIS LINE ONCE ACTUALLY CONNECTED
-            if self.unbin.isChecked() == True:
-                self.frameRateInput.validator = QIntValidator(1, UNBINNED_MODE, self)
-            else:
-                self.frameRateInput.validator = QIntValidator(1, BINNED_MODE, self)
-            if QIntValidator.validate(self.frameRateInput.validator, str(msg), 0)[0] != 2:
-                self.frameRateInput.setText(&quot;1&quot;)
-                showDialog(&quot;Frame rate must be integer between 1-2000 when in unbinned mode and &quot;
-                           &quot;1-3600 when in binned mode; automatically reset frame to 1&quot;)
+        if self.unbin.isChecked() == True:
+            self.frameRateInput.validator = QIntValidator(FRAMERATE_MIN, UNBINNED_MODE, self)
+        else:
+            self.frameRateInput.validator = QIntValidator(FRAMERATE_MIN, BINNED_MODE, self)
+        if QIntValidator.validate(self.frameRateInput.validator, str(msg), 0)[0] != 2:
+            self.frameRateInput.setText(&quot;1&quot;)
+            showDialog(&quot;Frame rate must be integer between 1-2000 when in unbinned mode and &quot;
+                       &quot;1-3600 when in binned mode; automatically reset frame to 1&quot;)
+        else:
+            self.frameRate_keyword.write(msg)
+        self.frameRateInput.changed = False
 </code></pre>
 <h4 id="writing-to-channel"><em>Writing to channel</em></h4>
 <p>These functions write the value passed through to the appropriate channel. The <em>wait=False</em> in the position and altitude writing channels are necessary to allow the user to stop the motion while the stages are moving to their destination.</p>
@@ -780,6 +894,35 @@ def showDialog(text, yes=False, cancel=False):
     def altWrite(self, msg):
         f = float(msg)
         self.altWritingChan.write(f, wait=False)
+</code></pre>
+<h3 id="loop-control">Loop Control</h3>
+<p>These functions are responsible for displaying the correct radio button for loop control, and sending the write signals when each button is pressed. </p>
+<pre><code class="language-python">    def loopController(self):
+        &quot;&quot;&quot;
+        Selects the correct radio button based on status of dmlp and dtlp keywords
+        &quot;&quot;&quot;
+        if self.dt_keyword.read() == &quot;CLOSE&quot; and self.dm_keyword.read() == &quot;CLOSE&quot;:
+            self.closedLoop.setChecked(True)
+        else:
+            self.openLoop.setChecked(True)
+
+    def openLoopButton_clicked(self):
+        &quot;&quot;&quot;
+        Turns loop off (opens loop)
+        &quot;&quot;&quot;
+        if self.dt_keyword.read() == &quot;CLOSE&quot; or self.dm_keyword.read() == &quot;CLOSE&quot;:
+            self.dm_keyword.write(&quot;OPEN&quot;)
+            time.sleep(0.5)
+            self.dt_keyword.write(&quot;OPEN&quot;)
+
+    def closeLoopButton_clicked(self):
+        &quot;&quot;&quot;
+        Turns loop on (closes loop)
+        &quot;&quot;&quot;
+        if self.dt_keyword.read() == &quot;OPEN&quot; or self.dm_keyword.read() == &quot;OPEN&quot;:
+            self.dt_keyword.write(&quot;CLOSE&quot;)
+            time.sleep(0.5)
+            self.dm_keyword.write(&quot;CLOSE&quot;)
 </code></pre>
 <h3 id="main-function">Main function</h3>
 <p>This is the standard startup main function for all kPyQt GUIs.</p>
